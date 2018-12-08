@@ -40,7 +40,6 @@ func Find(text string, pattern string) int {
 	textLength := len(text)
 	patternLength := len(pattern)
 
-	needle := patternLength - 1
 	textCompareIndex := patternLength - 1
 	patternCompareIndex := patternLength - 1
 
@@ -53,14 +52,13 @@ func Find(text string, pattern string) int {
 
 		textChar := text[textCompareIndex]
 		if textChar != pattern[patternCompareIndex] {
-			needle = textCompareIndex + calculateShiftAmount(shiftTable, textChar, patternLength)
-			textCompareIndex = needle
+			textCompareIndex += calculateShiftAmount(shiftTable, textChar, patternLength)
 			patternCompareIndex = patternLength - 1
 			matchCount = 0
 		} else {
 			matchCount++
 			if matchCount == patternLength {
-				return needle - patternLength + 1
+				return textCompareIndex
 			}
 			patternCompareIndex--
 			textCompareIndex--
@@ -76,9 +74,9 @@ func FindLast(text string, pattern string) int {
 	textLength := len(text)
 	patternLength := len(pattern)
 
-	needle := textLength - patternLength
-	textCompareIndex := needle
+	textCompareIndex := textLength - patternLength
 	patternCompareIndex := 0
+
 	matchCount := 0
 
 	for {
@@ -88,14 +86,13 @@ func FindLast(text string, pattern string) int {
 
 		textChar := text[textCompareIndex]
 		if textChar != pattern[patternCompareIndex] {
-			needle = textCompareIndex - calculateShiftAmount(shiftTable, textChar, patternLength)
-			textCompareIndex = needle
+			textCompareIndex -= calculateShiftAmount(shiftTable, textChar, patternLength)
 			patternCompareIndex = 0
 			matchCount = 0
 		} else {
 			matchCount++
 			if matchCount == patternLength {
-				return needle
+				return textCompareIndex - patternLength + 1
 			}
 			patternCompareIndex++
 			textCompareIndex++
