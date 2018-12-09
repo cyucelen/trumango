@@ -1,7 +1,5 @@
 package horspool
 
-import ()
-
 func createShiftTable(pattern string) map[byte]int {
 	shiftTable := make(map[byte]int)
 
@@ -27,9 +25,9 @@ func createReverseShiftTable(pattern string) map[byte]int {
 func calculateShiftAmount(shiftTable map[byte]int, char byte, patternLength int) int {
 	if shiftAmount, isExists := shiftTable[char]; isExists {
 		return shiftAmount
-	} else {
-		return patternLength
 	}
+	return patternLength
+
 }
 
 // Find finds the index of first matching pattern in text using horspool algorithm
@@ -40,30 +38,18 @@ func Find(text string, pattern string) int {
 	textLength := len(text)
 	patternLength := len(pattern)
 
-	textCompareIndex := patternLength - 1
-	patternCompareIndex := patternLength - 1
+	needle := patternLength
 
-	matchCount := 0
-
-	for {
-		if textCompareIndex > textLength {
-			return -1
-		}
-
-		textChar := text[textCompareIndex]
-		if textChar != pattern[patternCompareIndex] {
-			textCompareIndex += calculateShiftAmount(shiftTable, textChar, patternLength)
-			patternCompareIndex = patternLength - 1
-			matchCount = 0
+	for needle <= textLength {
+		textSlice := text[needle-patternLength : needle]
+		if textSlice != pattern {
+			needle += calculateShiftAmount(shiftTable, text[needle-1], patternLength)
 		} else {
-			matchCount++
-			if matchCount == patternLength {
-				return textCompareIndex
-			}
-			patternCompareIndex--
-			textCompareIndex--
+			return needle - patternLength
 		}
 	}
+
+	return -1
 }
 
 // FindLast finds the index of last matching pattern in thex using horspool algorithm
@@ -74,28 +60,16 @@ func FindLast(text string, pattern string) int {
 	textLength := len(text)
 	patternLength := len(pattern)
 
-	textCompareIndex := textLength - patternLength
-	patternCompareIndex := 0
+	needle := textLength - patternLength
 
-	matchCount := 0
-
-	for {
-		if textCompareIndex < 0 {
-			return -1
-		}
-
-		textChar := text[textCompareIndex]
-		if textChar != pattern[patternCompareIndex] {
-			textCompareIndex -= calculateShiftAmount(shiftTable, textChar, patternLength)
-			patternCompareIndex = 0
-			matchCount = 0
+	for needle >= 0 {
+		textSlice := text[needle : needle+patternLength]
+		if textSlice != pattern {
+			needle -= calculateShiftAmount(shiftTable, text[needle], patternLength)
 		} else {
-			matchCount++
-			if matchCount == patternLength {
-				return textCompareIndex - patternLength + 1
-			}
-			patternCompareIndex++
-			textCompareIndex++
+			return needle
 		}
 	}
+
+	return -1
 }
