@@ -27,7 +27,6 @@ func calculateShiftAmount(shiftTable map[byte]int, char byte, patternLength int)
 		return shiftAmount
 	}
 	return patternLength
-
 }
 
 // Find finds the index of first matching pattern in text using horspool algorithm
