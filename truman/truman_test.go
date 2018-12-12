@@ -8,8 +8,8 @@ import (
 
 func Test_New(t *testing.T) {
 	Convey("Given a questions file and a text file", t, func() {
-		questionsPath := "./test_questions.txt"
-		textPath := "./test_sentence_text.txt"
+		questionsPath := "./testdata/test_questions.txt"
+		textPath := "./testdata/test_sentence_text.txt"
 		Convey("When New called with questionsFile and textFile", func() {
 			t := New(questionsPath, textPath)
 			Convey("Then expectedQuestions should exist in t.questionAnswerSentences", func() {
@@ -41,8 +41,8 @@ func Test_New(t *testing.T) {
 
 func Test_findAnswerSentence(t *testing.T) {
 	Convey("Given Truman instance", t, func() {
-		questionsPath := "./test_questions.txt"
-		textPath := "./test_answer_text.txt"
+		questionsPath := "./testdata/test_questions.txt"
+		textPath := "./testdata/test_answer_text.txt"
 		t := New(questionsPath, textPath)
 		Convey("When t.findAnswerSentence called with question", func() {
 			question := "Who is suddenly aware that the hundreds of other beachgoers have stopped their activities to stare at him?"
@@ -92,17 +92,47 @@ func Test_findExactAnswers(t *testing.T) {
 		questionsPath := "../questions.txt"
 		textPath := "../the_truman_show_script.txt"
 		t := New(questionsPath, textPath)
-		t.findAllAnswerSentences()
+		questionAnswerSentences := t.findAllAnswerSentences()
 		Convey("When t.findExactAnswers called with question-answerSentence map", func() {
-			actualExactAnswers := t.findExactAnswers()
+			actualExactAnswers := t.findExactAnswers(questionAnswerSentences)
 			Convey("Then actualExactAnswer[question0] should equal to expectedExactAnswer", func() {
 				question := "Who is suddenly aware that the hundreds of other beachgoers have stopped their activities to stare at him?"
-				expectedExactAnswer := "Truman"
+				expectedExactAnswer := "truman"
 				So(actualExactAnswers[question], ShouldEqual, expectedExactAnswer)
 			})
 			Convey("Then actualExactAnswer[question1] should equal to expectedExactAnswer", func() {
 				question := "How many girls look up, surprised by the interruption?"
 				expectedExactAnswer := "3"
+				So(actualExactAnswers[question], ShouldEqual, expectedExactAnswer)
+			})
+			Convey("Then actualExactAnswer[question2] should equal to expectedExactAnswer", func() {
+				question := "With an apathetic shrug, what does Truman replace?"
+				expectedExactAnswer := "receiver"
+				So(actualExactAnswers[question], ShouldEqual, expectedExactAnswer)
+			})
+			Convey("Then actualExactAnswer[question3] should equal to expectedExactAnswer", func() {
+				question := "The sound of the children triggers what in his head?"
+				expectedExactAnswer := "memory"
+				So(actualExactAnswers[question], ShouldEqual, expectedExactAnswer)
+			})
+			Convey("Then actualExactAnswer[question4] should equal to expectedExactAnswer", func() {
+				question := "He picks up the framed picture of his wife from where?"
+				expectedExactAnswer := "desk"
+				So(actualExactAnswers[question], ShouldEqual, expectedExactAnswer)
+			})
+			Convey("Then actualExactAnswer[question5] should equal to expectedExactAnswer", func() {
+				question := "What does Truman exit to investigate?"
+				expectedExactAnswer := "oldsmobile"
+				So(actualExactAnswers[question], ShouldEqual, expectedExactAnswer)
+			})
+			Convey("Then actualExactAnswer[question6] should equal to expectedExactAnswer", func() {
+				question := "What color is the cardigan she is already removing from the drycleaning bag on the back seat as Truman pulls away from the curb?"
+				expectedExactAnswer := "lavender"
+				So(actualExactAnswers[question], ShouldEqual, expectedExactAnswer)
+			})
+			Convey("Then actualExactAnswer[question7] should equal to expectedExactAnswer", func() {
+				question := "What time is read on a clock on the wall?"
+				expectedExactAnswer := "4 12pm"
 				So(actualExactAnswers[question], ShouldEqual, expectedExactAnswer)
 			})
 		})

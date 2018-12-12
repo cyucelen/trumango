@@ -51,7 +51,7 @@ func Find(text string, pattern string) int {
 	return -1
 }
 
-// FindLast finds the index of last matching pattern in thex using horspool algorithm
+// FindLast finds the index of last matching pattern in text using horspool algorithm
 // returns -1 if pattern does not exist in text
 func FindLast(text string, pattern string) int {
 	shiftTable := createReverseShiftTable(pattern)

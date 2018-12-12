@@ -1,8 +1,9 @@
 package nlp
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func Test_Stem(t *testing.T) {
@@ -62,6 +63,22 @@ func Test_ClearAndStem(t *testing.T) {
 			Convey("Then actualCleanText should equal to expectedCleanText", func() {
 				expectedCleanText := "sudden awar hundr beachgoer stop activ stare"
 				So(actualCleanText, ShouldEqual, expectedCleanText)
+			})
+		})
+	})
+}
+
+func Test_SplitSentences(t *testing.T) {
+	Convey("Given a text consis of multiple sentences", t, func() {
+		text := `THE TRUMAN SHOW A Screen Play By Andrew M. Niccol FADE IN A white title appears on a black screen. "One doesn't discover new lands without consenting to lose sight of the shore for a very long time." Andre Gide The title fades off, replaced by a second title.`
+		Convey("When SplitSentences called with text", func() {
+			actualSentences := SplitSentences(text)
+			Convey("Then actualSentences should resemble expectedSentences", func() {
+				expectedSentences := []string{
+					"THE TRUMAN SHOW A Screen Play By Andrew M. Niccol FADE IN A white title appears on a black screen.",
+					"\"One doesn't discover new lands without consenting to lose sight of the shore for a very long time.\"",
+					"Andre Gide The title fades off, replaced by a second title."}
+				So(actualSentences, ShouldResemble, expectedSentences)
 			})
 		})
 	})

@@ -10,10 +10,10 @@ import (
 	"sync"
 
 	"github.com/fatih/color"
-	prose "gopkg.in/jdkato/prose.v2"
 
 	"github.com/cyucelen/trumango/horspool"
 	"github.com/cyucelen/trumango/nlp"
+	"github.com/cyucelen/trumango/util"
 )
 
 var yellow = color.New(color.FgYellow)
@@ -21,12 +21,15 @@ var red = color.New(color.FgRed)
 var blue = color.New(color.FgBlue)
 var white = color.New(color.FgWhite).SprintFunc()
 
+// Truman is happy to answer your questions :)
 type Truman struct {
 	text                    string
 	sentences               []string
 	questionAnswerSentences map[string]string
 }
 
+// New loads questions and text from given file paths, splits text into sentences and
+// returns a Truman instance
 func New(questionsPath string, textPath string) *Truman {
 	t := &Truman{}
 	t.sentences = make([]string, 0, 10000)
@@ -41,79 +44,6 @@ func New(questionsPath string, textPath string) *Truman {
 	t.sentences = nlp.SplitSentences(t.text)
 
 	return t
-}
-
-func FindNumber(doc *prose.Document) string {
-	for _, token := range doc.Tokens() {
-		if token.Tag == "CD" {
-			return token.Text
-		}
-	}
-	return ""
-}
-
-func (t *Truman) findExactAnswers() map[string]string {
-	questionExactAnswers := make(map[string]string)
-	tokenizedQuestionAnswers := nlp.TokenizeMap(t.questionAnswerSentences)
-
-	for questionDoc, answerSentenceDoc := range tokenizedQuestionAnswers {
-		fmt.Println(questionDoc.Text)
-		questionExactAnswers[questionDoc.Text] = ""
-		for _, token := range questionDoc.Tokens() {
-			if token.Tag == "WP" {
-				tokenLowerCase := strings.ToLower(token.Text)
-				if tokenLowerCase == "who" {
-					questionExactAnswers[questionDoc.Text] = answerSentenceDoc.Entities()[0].Text
-				}
-			} else if token.Tag == "WRB" {
-				tokenLowerCase := strings.ToLower(token.Text)
-				if tokenLowerCase == "how" {
-					questionExactAnswers[questionDoc.Text] = FindNumber(answerSentenceDoc)
-				}
-			}
-		}
-	}
-
-	return questionExactAnswers
-}
-
-func printWordsWithTab(text string) {
-	words := strings.Split(text, " ")
-	for _, word := range words {
-		fmt.Printf("%-12s", word)
-	}
-	fmt.Println()
-}
-
-func (t *Truman) PrintAnswersSentences() {
-	t.findAllAnswerSentences()
-
-	tokenizedQuestionAnswers := nlp.TokenizeMap(t.questionAnswerSentences)
-
-	for questionDoc, answerSentenceDoc := range tokenizedQuestionAnswers {
-		red.Printf("Question : ")
-		printWordsWithTab(questionDoc.Text)
-		yellow.Printf("Tokens   : ")
-		nlp.PrintTokens(questionDoc)
-
-		fmt.Println()
-
-		blue.Printf("Answer   : ")
-		printWordsWithTab(answerSentenceDoc.Text)
-		yellow.Printf("Tokens   : ")
-		nlp.PrintTokens(answerSentenceDoc)
-
-		// fmt.Println()
-
-		// clearAnswer := nlp.ClearAndStem(answerSentenceDoc.Text)
-		// clearAnswerTokenized := nlp.Tokenize(clearAnswer)
-		// blue.Printf("ClrAnswer:")
-		// printWordsWithTab(clearAnswer)
-		// yellow.Printf("Tokens   : ")
-		// nlp.PrintTokens(clearAnswerTokenized)
-
-		fmt.Println("-------------------------------")
-	}
 }
 
 func (t *Truman) loadText(textFilePath string) {
@@ -132,7 +62,49 @@ func (t *Truman) loadQuestions(questionsFilePath string) {
 		question := scanner.Text()
 		t.questionAnswerSentences[question] = ""
 	}
+}
 
+// Answer answers the given questions by printing
+func (t *Truman) Answer() {
+	questionAnswerSentences := t.findAllAnswerSentences()
+	questionExactAnswer := t.findExactAnswers(questionAnswerSentences)
+
+	t.printQuestionAnswerMap(questionExactAnswer)
+}
+
+func (t *Truman) findExactAnswers(map[string]string) map[string]string {
+	questionExactAnswers := make(map[string]string)
+
+	for question, answerSentence := range t.questionAnswerSentences {
+		questionExactAnswers[question] = t.findExactAnswer(question, answerSentence)
+	}
+
+	return questionExactAnswers
+}
+
+func (t *Truman) findExactAnswer(question string, answerSentence string) string {
+	stemmedToOriginalWordMap := make(map[string]string)
+
+	cleanAnswerSentence := nlp.ClearStopWords(answerSentence)
+	cleanAnswerWords := strings.Split(cleanAnswerSentence, " ")
+	cleanStemmedAnswerWords := make([]string, 0)
+
+	for _, word := range cleanAnswerWords {
+		stemmedWord := nlp.Stem(word)
+		cleanStemmedAnswerWords = append(cleanStemmedAnswerWords, stemmedWord)
+		stemmedToOriginalWordMap[stemmedWord] = word
+	}
+
+	cleanStemmedQuestion := nlp.ClearAndStem(question)
+	cleanStemmedQuestionWords := strings.Split(cleanStemmedQuestion, " ")
+
+	answers := util.Difference(cleanStemmedAnswerWords, cleanStemmedQuestionWords)
+
+	for i := range answers {
+		answers[i] = stemmedToOriginalWordMap[answers[i]]
+	}
+
+	return strings.Join(answers, " ")
 }
 
 func (t *Truman) findAllAnswerSentences() map[string]string {
@@ -174,4 +146,12 @@ func calculateMatchPercentage(text string, patterns []string) float64 {
 	}
 
 	return matchCount / float64(len(patterns)) * 100
+}
+
+func (t *Truman) printQuestionAnswerMap(qa map[string]string) {
+	for question, answer := range qa {
+		red.Printf("Question : %s\n", white(question))
+		blue.Printf("Answer   : %s\n", white(answer))
+		fmt.Println("-------------------------------")
+	}
 }
