@@ -26,14 +26,17 @@ type Truman struct {
 	text                    string
 	sentences               []string
 	questionAnswerSentences map[string]string
+	matchPercentage         float64
 }
 
 // New loads questions and text from given file paths, splits text into sentences and
 // returns a Truman instance
-func New(questionsPath string, textPath string) *Truman {
+func New(questionsPath string, textPath string, matchPercentage float64) *Truman {
 	t := &Truman{}
 	t.sentences = make([]string, 0, 10000)
 	t.questionAnswerSentences = make(map[string]string)
+
+	t.matchPercentage = matchPercentage
 
 	questionsFilePath, _ := filepath.Abs(questionsPath)
 	textFilePath, _ := filepath.Abs(textPath)
@@ -129,7 +132,7 @@ func (t *Truman) findAnswerSentence(question string) string {
 
 	for i := 0; i < len(t.sentences); i++ {
 		cleanSentence := nlp.ClearAndStem(t.sentences[i])
-		if calculateMatchPercentage(cleanSentence, cleanQuestionWords) > 70 {
+		if calculateMatchPercentage(cleanSentence, cleanQuestionWords) > t.matchPercentage {
 			return t.sentences[i]
 		}
 	}

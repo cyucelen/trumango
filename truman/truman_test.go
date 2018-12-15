@@ -11,7 +11,7 @@ func Test_New(t *testing.T) {
 		questionsPath := "./testdata/test_questions.txt"
 		textPath := "./testdata/test_sentence_text.txt"
 		Convey("When New called with questionsFile and textFile", func() {
-			t := New(questionsPath, textPath)
+			t := New(questionsPath, textPath, 70)
 			Convey("Then expectedQuestions should exist in t.questionAnswerSentences", func() {
 				expectedQuestions := []string{
 					"Who is suddenly aware that the hundreds of other beachgoers have stopped their activities to stare at him?",
@@ -43,7 +43,7 @@ func Test_findAnswerSentence(t *testing.T) {
 	Convey("Given Truman instance", t, func() {
 		questionsPath := "./testdata/test_questions.txt"
 		textPath := "./testdata/test_answer_text.txt"
-		t := New(questionsPath, textPath)
+		t := New(questionsPath, textPath, 70)
 		Convey("When t.findAnswerSentence called with question", func() {
 			question := "Who is suddenly aware that the hundreds of other beachgoers have stopped their activities to stare at him?"
 			actualAnswerSentence := t.findAnswerSentence(question)
@@ -67,7 +67,7 @@ func Test_findAllAnswerSentences(t *testing.T) {
 	Convey("Given Truman instance", t, func() {
 		questionsPath := "../questions.txt"
 		textPath := "../the_truman_show_script.txt"
-		t := New(questionsPath, textPath)
+		t := New(questionsPath, textPath, 70)
 		Convey("When t.findAllAnswerSentecences called", func() {
 			actualAnswers := t.findAllAnswerSentences()
 			Convey("Then actualAnswers should resemble expected answers", func() {
@@ -91,7 +91,7 @@ func Test_findExactAnswers(t *testing.T) {
 	Convey("Given Truman instance and question-answerSentence map", t, func() {
 		questionsPath := "../questions.txt"
 		textPath := "../the_truman_show_script.txt"
-		t := New(questionsPath, textPath)
+		t := New(questionsPath, textPath, 70)
 		questionAnswerSentences := t.findAllAnswerSentences()
 		Convey("When t.findExactAnswers called with question-answerSentence map", func() {
 			actualExactAnswers := t.findExactAnswers(questionAnswerSentences)
