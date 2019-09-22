@@ -1,6 +1,6 @@
 # Trumango
 
-Trumango is a basic question answering system based on pattern matching. This project written in Golang with TDD style.
+Trumango is a basic question answering system based on pattern matching.
 
 # Usage
 
@@ -52,11 +52,11 @@ Show usage and flag descriptions: `./trumango --help`
 
 ## Getting and Processing Input
 
-Trumango loads specified files, then places each question into a map -_which will be filled with corresponding answer sentences of questions_- and splits the text into sentences by using [prose](https://github.com/jdkato/prose). Prose has very extensive and advanced features such as tokenizing a sentence and tagging each word as verb, noun etc. but in this project prose just used for splitting the text into sentences more accurately.
+Trumango loads specified files, then splits the text into sentences by using [prose](https://github.com/jdkato/prose). Prose has very extensive and advanced features such as tokenizing a sentence and tagging each word as verb, noun etc. but in this project prose just used for splitting the text into sentences more accurately.
 
 ## Finding Answer Sentences of Questions
 
-After the processing of input, for each question in the map, corresponding question's stop words cleared and stemmed for searching in the sentences. When clearing and stemming process of question is done, question splitted into words and each word searcher in cleared and stemmed sentence for match. If match percentage of question words is higher then desired percentage -_which can be specified by `-m` flag_-, then that sentence assigned to map for corresponding question.
+After the processing of input, for each question, corresponding question's stop words cleared and stemmed for searching in the sentences. When clearing and stemming process of question is done, question splitted into words and each word searched in text sentences to find most matched sentence.
 
 ## Finding Exact Answers
 
@@ -90,11 +90,3 @@ When finding answer sentence process is done, by using question and answer sente
 
 ### Further examples can be found in `truman_test.go` file.
 
----
-
-### Full list of libraries used:
-
-- https://github.com/bbalet/stopwords
-- https://github.com/dchest/stemmer/porter2
-- https://github.com/jdkato/prose
-- https://github.com/fatih/color (for coloring output)

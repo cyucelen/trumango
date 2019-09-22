@@ -29,6 +29,19 @@ func calculateShiftAmount(shiftTable map[byte]int, char byte, patternLength int)
 	return patternLength
 }
 
+func matchPatternReverse(text, pattern string) bool {
+	patternLength := len(pattern)
+	textLength := len(text)
+
+	for i := range pattern {
+		if text[textLength-i-1] != pattern[patternLength-i-1] {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Find finds the index of first matching pattern in text using horspool algorithm
 // returns -1 if pattern does not exist in text
 func Find(text string, pattern string) int {
@@ -41,7 +54,8 @@ func Find(text string, pattern string) int {
 
 	for needle <= textLength {
 		textSlice := text[needle-patternLength : needle]
-		if textSlice != pattern {
+		isMatched := matchPatternReverse(textSlice, pattern)
+		if !isMatched {
 			needle += calculateShiftAmount(shiftTable, text[needle-1], patternLength)
 		} else {
 			return needle - patternLength

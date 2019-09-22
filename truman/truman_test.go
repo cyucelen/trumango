@@ -11,21 +11,13 @@ func Test_New(t *testing.T) {
 		questionsPath := "./testdata/test_questions.txt"
 		textPath := "./testdata/test_sentence_text.txt"
 		Convey("When New called with questionsFile and textFile", func() {
-			t := New(questionsPath, textPath, 70)
-			Convey("Then expectedQuestions should exist in t.questionAnswerSentences", func() {
+			t := New(questionsPath, textPath)
+			Convey("Then t.questions should resemble expectedQuestions", func() {
 				expectedQuestions := []string{
 					"Who is suddenly aware that the hundreds of other beachgoers have stopped their activities to stare at him?",
 					"What color is the cardigan she is already removing from the drycleaning bag on the back seat as Truman pulls away from the curb?",
 				}
-				for _, expectedQuestion := range expectedQuestions {
-					_, exists := t.questionAnswerSentences[expectedQuestion]
-					So(exists, ShouldBeTrue)
-				}
-			})
-
-			Convey("then t.text should equal to expectedText", func() {
-				expectedText := `THE TRUMAN SHOW A Screen Play By Andrew M. Niccol FADE IN A white title appears on a black screen. "One doesn't discover new lands without consenting to lose sight of the shore for a very long time." Andre Gide The title fades off, replaced by a second title.`
-				So(t.text, ShouldResemble, expectedText)
+				So(t.questions, ShouldResemble, expectedQuestions)
 			})
 
 			Convey("then t.sentences should resemble expectedSenteces", func() {
@@ -33,28 +25,28 @@ func Test_New(t *testing.T) {
 					"THE TRUMAN SHOW A Screen Play By Andrew M. Niccol FADE IN A white title appears on a black screen.",
 					"\"One doesn't discover new lands without consenting to lose sight of the shore for a very long time.\"",
 					"Andre Gide The title fades off, replaced by a second title."}
-				So(t.sentences, ShouldResemble, expectedSentences)
+				So(t.textSentences, ShouldResemble, expectedSentences)
 			})
 		})
 	})
 }
 
-func Test_findAnswerSentence(t *testing.T) {
+func Test_findAnswerSentenceToQuestion(t *testing.T) {
 	Convey("Given Truman instance", t, func() {
 		questionsPath := "./testdata/test_questions.txt"
 		textPath := "./testdata/test_answer_text.txt"
-		t := New(questionsPath, textPath, 70)
-		Convey("When t.findAnswerSentence called with question", func() {
+		t := New(questionsPath, textPath)
+		Convey("When t.findAnswerSentenceToQuestion called with question", func() {
 			question := "Who is suddenly aware that the hundreds of other beachgoers have stopped their activities to stare at him?"
-			actualAnswerSentence := t.findAnswerSentence(question)
+			actualAnswerSentence := t.findAnswerSentenceToQuestion(question)
 			Convey("Then actualAnswerSentence should equal to expectedAnswerSentence", func() {
 				expectedAnswerSentence := "Truman is suddenly aware that the hundreds of other beachgoers have stopped their activities to stare at him."
 				So(actualAnswerSentence, ShouldEqual, expectedAnswerSentence)
 			})
 		})
-		Convey("When t.findAnswerSentence called with another question", func() {
+		Convey("When t.findAnswerSentenceToQuestion called with another question", func() {
 			question := "What color is the cardigan she is already removing from the drycleaning bag on the back seat as Truman pulls away from the curb?"
-			actualAnswerSentence := t.findAnswerSentence(question)
+			actualAnswerSentence := t.findAnswerSentenceToQuestion(question)
 			Convey("Then actualAnswerSentence should equal to expectedAnswerSentence", func() {
 				expectedAnswerSentence := "As Truman pulls away from the curb, she is already removing the lavender cardigan from the drycleaning bag on the back seat."
 				So(actualAnswerSentence, ShouldEqual, expectedAnswerSentence)
@@ -63,13 +55,13 @@ func Test_findAnswerSentence(t *testing.T) {
 	})
 }
 
-func Test_findAllAnswerSentences(t *testing.T) {
+func Test_findAnswerSentenceToEachQuestion(t *testing.T) {
 	Convey("Given Truman instance", t, func() {
 		questionsPath := "../questions.txt"
 		textPath := "../the_truman_show_script.txt"
-		t := New(questionsPath, textPath, 70)
-		Convey("When t.findAllAnswerSentecences called", func() {
-			actualAnswers := t.findAllAnswerSentences()
+		t := New(questionsPath, textPath)
+		Convey("When t.findAnswerSentenceToEachQuestion called", func() {
+			actualAnswers := t.findAnswerSentenceToEachQuestion()
 			Convey("Then actualAnswers should resemble expected answers", func() {
 				expectedAnswers := map[string]string{
 					"Who is suddenly aware that the hundreds of other beachgoers have stopped their activities to stare at him?":                       "Truman is suddenly aware that the hundreds of other beachgoers have stopped their activities to stare at him.",
@@ -87,14 +79,14 @@ func Test_findAllAnswerSentences(t *testing.T) {
 	})
 }
 
-func Test_findExactAnswers(t *testing.T) {
+func Test_findExactAnswerFromEachSentence(t *testing.T) {
 	Convey("Given Truman instance and question-answerSentence map", t, func() {
 		questionsPath := "../questions.txt"
 		textPath := "../the_truman_show_script.txt"
-		t := New(questionsPath, textPath, 70)
-		questionAnswerSentences := t.findAllAnswerSentences()
-		Convey("When t.findExactAnswers called with question-answerSentence map", func() {
-			actualExactAnswers := t.findExactAnswers(questionAnswerSentences)
+		t := New(questionsPath, textPath)
+		answerSentences := t.findAnswerSentenceToEachQuestion()
+		Convey("When findExactAnswerFromEachSentence called with question-answerSentence map", func() {
+			actualExactAnswers := findExactAnswerFromEachSentence(answerSentences)
 			Convey("Then actualExactAnswer[question0] should equal to expectedExactAnswer", func() {
 				question := "Who is suddenly aware that the hundreds of other beachgoers have stopped their activities to stare at him?"
 				expectedExactAnswer := "truman"

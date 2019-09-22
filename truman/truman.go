@@ -23,20 +23,14 @@ var white = color.New(color.FgWhite).SprintFunc()
 
 // Truman is happy to answer your questions :)
 type Truman struct {
-	text                    string
-	sentences               []string
-	questionAnswerSentences map[string]string
-	matchPercentage         float64
+	textSentences []string
+	questions     []string
 }
 
 // New loads questions and text from given file paths, splits text into sentences and
 // returns a Truman instance
-func New(questionsPath string, textPath string, matchPercentage float64) *Truman {
+func New(questionsPath string, textPath string) *Truman {
 	t := &Truman{}
-	t.sentences = make([]string, 0, 10000)
-	t.questionAnswerSentences = make(map[string]string)
-
-	t.matchPercentage = matchPercentage
 
 	questionsFilePath, _ := filepath.Abs(questionsPath)
 	textFilePath, _ := filepath.Abs(textPath)
@@ -44,14 +38,13 @@ func New(questionsPath string, textPath string, matchPercentage float64) *Truman
 	t.loadQuestions(questionsFilePath)
 	t.loadText(textFilePath)
 
-	t.sentences = nlp.SplitSentences(t.text)
-
 	return t
 }
 
 func (t *Truman) loadText(textFilePath string) {
 	textByte, _ := ioutil.ReadFile(textFilePath)
-	t.text = strings.Trim(string(textByte), "\n")
+	text := strings.Trim(string(textByte), "\n")
+	t.textSentences = nlp.SplitSentences(text)
 }
 
 func (t *Truman) loadQuestions(questionsFilePath string) {
@@ -62,35 +55,74 @@ func (t *Truman) loadQuestions(questionsFilePath string) {
 	scanner.Split(bufio.ScanLines)
 
 	for scanner.Scan() {
-		question := scanner.Text()
-		t.questionAnswerSentences[question] = ""
+		t.questions = append(t.questions, scanner.Text())
 	}
 }
 
-// Answer answers the given questions by printing
 func (t *Truman) Answer() {
-	questionAnswerSentences := t.findAllAnswerSentences()
-	questionExactAnswer := t.findExactAnswers(questionAnswerSentences)
-
-	t.printQuestionAnswerMap(questionExactAnswer)
+	answerSentences := t.findAnswerSentenceToEachQuestion()
+	exactAnswers := findExactAnswerFromEachSentence(answerSentences)
+	t.printResults(exactAnswers)
 }
 
-func (t *Truman) findExactAnswers(map[string]string) map[string]string {
-	questionExactAnswers := make(map[string]string)
+func (t *Truman) findAnswerSentenceToEachQuestion() map[string]string {
+	answerSentences := make(map[string]string)
 
-	for question, answerSentence := range t.questionAnswerSentences {
-		questionExactAnswers[question] = t.findExactAnswer(question, answerSentence)
+	var wg sync.WaitGroup
+	wg.Add(len(t.questions))
+	for _, question := range t.questions {
+		go func(question string) {
+			answerSentences[question] = t.findAnswerSentenceToQuestion(question)
+			wg.Done()
+		}(question)
+	}
+	wg.Wait()
+
+	return answerSentences
+}
+
+func (t *Truman) findAnswerSentenceToQuestion(question string) string {
+	cleanQuestion := nlp.ClearAndStem(question)
+	cleanQuestionWords := strings.Split(cleanQuestion, " ")
+
+	mostMatchSentence := ""
+	var mostMatchPercentage float64
+
+	for i := 0; i < len(t.textSentences); i++ {
+		matchPercentage := calculateWordMatchPercentage(t.textSentences[i], cleanQuestionWords)
+		if matchPercentage > mostMatchPercentage {
+			mostMatchPercentage = matchPercentage
+			mostMatchSentence = t.textSentences[i]
+		}
 	}
 
-	return questionExactAnswers
+	return mostMatchSentence
 }
 
-func (t *Truman) findExactAnswer(question string, answerSentence string) string {
+func calculateWordMatchPercentage(text string, patterns []string) float64 {
+	var matchCount float64
+	for j := 0; j < len(patterns); j++ {
+		if horspool.Find(strings.ToLower(text), patterns[j]) != -1 {
+			matchCount++
+		}
+	}
+	return matchCount / float64(len(patterns)) * 100
+}
+
+func findExactAnswerFromEachSentence(sentences map[string]string) map[string]string {
+	exactAnswers := make(map[string]string)
+	for question, answerSentence := range sentences {
+		exactAnswers[question] = findExactAnswerFromSentence(question, answerSentence)
+	}
+	return exactAnswers
+}
+
+func findExactAnswerFromSentence(question string, sentence string) string {
 	stemmedToOriginalWordMap := make(map[string]string)
 
-	cleanAnswerSentence := nlp.ClearStopWords(answerSentence)
+	cleanAnswerSentence := nlp.ClearStopWords(sentence)
 	cleanAnswerWords := strings.Split(cleanAnswerSentence, " ")
-	cleanStemmedAnswerWords := make([]string, 0)
+	cleanStemmedAnswerWords := []string{}
 
 	for _, word := range cleanAnswerWords {
 		stemmedWord := nlp.Stem(word)
@@ -110,48 +142,7 @@ func (t *Truman) findExactAnswer(question string, answerSentence string) string 
 	return strings.Join(answers, " ")
 }
 
-func (t *Truman) findAllAnswerSentences() map[string]string {
-	var wg sync.WaitGroup
-	wg.Add(len(t.questionAnswerSentences))
-
-	for question := range t.questionAnswerSentences {
-		go func(question string) {
-			t.questionAnswerSentences[question] = t.findAnswerSentence(question)
-			wg.Done()
-		}(question)
-	}
-
-	wg.Wait()
-
-	return t.questionAnswerSentences
-}
-
-func (t *Truman) findAnswerSentence(question string) string {
-	cleanQuestion := nlp.ClearAndStem(question)
-	cleanQuestionWords := strings.Split(cleanQuestion, " ")
-
-	for i := 0; i < len(t.sentences); i++ {
-		cleanSentence := nlp.ClearAndStem(t.sentences[i])
-		if calculateMatchPercentage(cleanSentence, cleanQuestionWords) > t.matchPercentage {
-			return t.sentences[i]
-		}
-	}
-
-	return ""
-}
-
-func calculateMatchPercentage(text string, patterns []string) float64 {
-	var matchCount float64
-	for j := 0; j < len(patterns); j++ {
-		if horspool.Find(text, patterns[j]) != -1 {
-			matchCount++
-		}
-	}
-
-	return matchCount / float64(len(patterns)) * 100
-}
-
-func (t *Truman) printQuestionAnswerMap(qa map[string]string) {
+func (t *Truman) printResults(qa map[string]string) {
 	for question, answer := range qa {
 		red.Printf("Question : %s\n", white(question))
 		blue.Printf("Answer   : %s\n", white(answer))
